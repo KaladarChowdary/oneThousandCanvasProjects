@@ -15,13 +15,18 @@ function changeWithWindow() {
   window.addEventListener("resize", maxifyCanvas);
 }
 
+let size, gap;
+
 function animate() {
   requestAnimationFrame(animate);
   clearScreen();
 
-  for (let i = 0; i + 6 <= canvas.width; i += 6) {
-    for (let j = 0; j + 6 <= canvas.height; j += 6) {
-      ctx.fillRect(i, j, 5, 5);
+  size = 20;
+  gap = 4;
+
+  for (let i = 0; i + gap + size <= canvas.width; i += size + gap) {
+    for (let j = 0; j + gap + size <= canvas.height; j += size + gap) {
+      ctx.fillRect(i, j, size, size);
     }
   }
 }
