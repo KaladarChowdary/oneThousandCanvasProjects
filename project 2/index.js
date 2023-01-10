@@ -23,8 +23,9 @@ function opacity() {
     rectObj.centerX,
     rectObj.centerY
   );
-  console.log(rectObj.centerX, mouse.x);
-  console.log(distance);
+
+  if (distance < rectObj.width / 2) return 1;
+  else return 20 / distance;
 }
 // ADDING EVENT LISTENERS
 window.addEventListener("mousemove", function (evt) {
@@ -55,7 +56,8 @@ class Rectangle {
     this.centerX = this.x + this.width / 2;
     this.centerY = this.y + this.height / 2;
     ctx.beginPath();
-    ctx.fillStyle = `rgba(${0}, ${0}, ${255}, ${1})`;
+    let a = opacity();
+    ctx.fillStyle = `rgba(${0}, ${0}, ${255}, ${a})`;
     ctx.fillRect(this.x, this.y, this.width, this.height);
   }
 }
