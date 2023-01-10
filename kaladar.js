@@ -19,14 +19,12 @@ class Rectangle {
     this.draw(cvs);
   }
 }
+
 const rectObj = new Rectangle(20, 20, 50, 50);
-assignChangesToRectObj(rectObj);
 
 function animate() {
   requestAnimationFrame(animate);
   clearCanvas(ctx);
-
-  rectObj.update(ctx);
 }
 
 makeCanvasSizeOfWindow(canvas);
@@ -43,18 +41,16 @@ function clearCanvas(cvs) {
   cvs.clearRect(0, 0, window.innerWidth, window.innerHeight);
 }
 
-// ---------------------------------------------------------------
-
 window.addEventListener("resize", function () {
   makeCanvasSizeOfWindow(canvas);
 });
 
-function assignChangesToRectObj(rectObj) {
-  const valueList = document.querySelectorAll(".value");
+const mouse = {
+  x: 0,
+  y: 0,
+};
 
-  valueList.forEach((element) => {
-    element.addEventListener("input", function () {
-      rectObj[element.id] = element.value;
-    });
-  });
-}
+window.addEventListener("mousemove", function (evt) {
+  mouse.x = evt.clientX;
+  mouse.y = evt.clientY;
+});

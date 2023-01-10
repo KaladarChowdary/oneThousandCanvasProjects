@@ -1,54 +1,35 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-function maxCanvaSize() {
+function makeCanvasFull() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 }
 
-function createRect() {
-  return {
-    x: canvas.width / 2,
-    y: canvas.height / 2,
-    width: 40,
-    height: 40,
-  };
-}
+makeCanvasFull();
 
-const mouse = {
-  x: 0,
-  y: 0,
-};
+class Rectangle {
+  constructor(x, y, width, height, opacity) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.opacity = opacity;
+  }
 
-window.addEventListener("mousemove", function (evt) {
-  mouse.x = evt.clientX;
-  mouse.y = evt.clientY;
-});
-
-function Opacity() {
-  if (mouse.x < rectObj.x) {
-    return mouse.x / rectObj.x;
-  } else if (mouse.x > rectObj.x + rectObj.width) {
-    return (
-      (canvas.width - mouse.x) / (canvas.width - (rectObj.x + rectObj.width))
-    );
-  } else {
-    return 1;
+  draw() {
+    ctx.beginPath();
+    ctx.fillStyle = `rgba(${0}, ${0}, ${255}, ${1})`;
+    ctx.fillRect(this.x, this.y, this.width, this.height);
   }
 }
 
-//
-maxCanvaSize();
-const rectObj = createRect();
+let rectObj = new Rectangle(canvas.width / 2, canvas.height / 2, 50, 50, 1);
 
-let a;
 function animate() {
   requestAnimationFrame(animate);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  a = Opacity();
 
-  ctx.fillStyle = `rgba(${3}, ${175}, ${9}, ${a})`;
-  ctx.fillRect(rectObj.x, rectObj.y, rectObj.width, rectObj.height);
+  rectObj.draw();
 }
 
 animate();
