@@ -33,7 +33,7 @@ function opacity(rectObj) {
   );
 
   if (distance < rectObj.width / 2) return 1;
-  else return 20 / distance;
+  else return 30 / distance;
 }
 
 // Changes mouse coordinates when mouse is moved
