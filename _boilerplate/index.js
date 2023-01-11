@@ -18,6 +18,9 @@ window.addEventListener("resize", maxifyCanvas);
 function maxifyCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+
+  cObj.x = canvas.width / 2;
+  cObj.y = canvas.height / 2;
 }
 
 function clearScreen() {
@@ -75,7 +78,7 @@ class Circle {
   }
 }
 
-const cObj = new Circle(canvas.width / 2, canvas.height / 2, 40, 0, 0);
+const cObj = new Circle(canvas.width / 2, canvas.height / 2, 100, 0, 0);
 
 function animate() {
   requestAnimationFrame(animate);
