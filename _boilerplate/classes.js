@@ -1,3 +1,5 @@
+// Make sure everything is explicit
+
 // SIMPLE RECTANGLE CLASS
 class Rectangle {
   constructor(x, y, width, height) {
