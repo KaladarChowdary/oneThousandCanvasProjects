@@ -33,12 +33,13 @@ class Circle {
   update() {
     this.x += this.dx;
     this.y += this.dy;
+
     this.draw();
 
-    if (this.x + this.r >= canvas.width || this.x - this.r <= 0) {
+    if (this.HCollision()) {
       this.dx = -this.dx;
     }
-    if (this.y + this.r >= canvas.height || this.y - this.r <= 0) {
+    if (this.VCollision()) {
       this.dy = -this.dy;
     }
   }
@@ -57,12 +58,12 @@ class Circle {
 let cArr = [];
 let x, y, r, dx, dy;
 
-for (let i = 0; i < 50; i++) {
-  r = 50;
+for (let i = 0; i < 200; i++) {
+  r = 20;
   x = r + Math.random() * (canvas.width - 2 * r);
   y = r + Math.random() * (canvas.height - 2 * r);
-  dx = 10 * (0.5 - Math.random());
-  dy = 10 * (0.5 - Math.random());
+  dx = 5 * (0.5 - Math.random());
+  dy = 5 * (0.5 - Math.random());
 
   cArr.push(new Circle(x, y, r, dx, dy));
 }
