@@ -24,9 +24,20 @@ function clearScreen() {
 
 function animate() {
   requestAnimationFrame(animate);
-  clearScreen();
 }
 
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
