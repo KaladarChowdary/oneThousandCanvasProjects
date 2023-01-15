@@ -12,6 +12,10 @@ window.addEventListener("resize", function (evt) {
   canvas.height = window.innerHeight;
 });
 
+window.addEventListener("dblclick", function () {
+  createFlag = true;
+});
+
 // Give random real from range
 function randRange(min, max) {
   return min + Math.random() * (max - min);
@@ -54,8 +58,11 @@ class Circle {
       this.dx = -this.dx;
     }
     // Change y velocity when verticle collision
-    if (this.VCollision()) {
-      this.dy = -this.dy;
+    if (this.UnderCanvas()) {
+      this.dy = -Math.abs(this.dy);
+    }
+    if (this.AboveCanvas()) {
+      this.dy = Math.abs(this.dy);
     }
   }
 
@@ -63,6 +70,14 @@ class Circle {
   updateXandY() {
     this.x += this.dx;
     this.y += this.dy;
+  }
+
+  UnderCanvas() {
+    return this.y + this.r >= canvas.height;
+  }
+
+  AboveCanvas() {
+    return this.y - this.r <= 0;
   }
 
   // Detect Horizontal collision with canvas
@@ -88,7 +103,7 @@ function addCircle() {
 
   c = randElement(colorArray);
 
-  if (createFlag && cArr.length < 20) {
+  if (createFlag) {
     cArr.push(new Circle(x, y, r, dx, dy, c));
   }
 }
@@ -96,7 +111,7 @@ function addCircle() {
 // Creating circle array with random properties
 let cArr = [];
 let colorArray = ["#560764", "#913175", "#DD5B82", "#FE9797"];
-let createFlag = true;
+let createFlag = false;
 
 addCircle();
 
