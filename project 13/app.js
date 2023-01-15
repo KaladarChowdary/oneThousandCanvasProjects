@@ -131,7 +131,7 @@ function animate() {
     circle.update();
   });
 
-  setTimeout(addCircle, 300 * i);
+  setTimeout(addCircle, 100 * i);
   i++;
 }
 animate();
