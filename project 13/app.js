@@ -12,15 +12,6 @@ window.addEventListener("resize", function (evt) {
   canvas.height = window.innerHeight;
 });
 
-let f = function () {
-  console.log("working");
-};
-f();
-
-window.addEventListener("touchstart", f);
-window.addEventListener("touchmove", f);
-window.addEventListener("touchend", f);
-
 // Give random real from range
 function randRange(min, max) {
   return min + Math.random() * (max - min);
@@ -97,7 +88,7 @@ function addCircle() {
 
   c = randElement(colorArray);
 
-  if (createFlag) {
+  if (createFlag && cArr.length < 20) {
     cArr.push(new Circle(x, y, r, dx, dy, c));
   }
 }
