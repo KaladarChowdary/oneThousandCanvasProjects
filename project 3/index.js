@@ -63,7 +63,7 @@ class Rectangle {
   }
 }
 
-let mouse = { x: 0, y: 0 };
+let mouse = { x: -1000, y: -1000 };
 
 // ALL RUNNING IS HERE
 

@@ -138,7 +138,7 @@ let cArr = [];
 let i, j, gap, r;
 i = 0;
 j = 0;
-r = 10;
+r = 5;
 gap = 2;
 for (let j = r; j + 2 * r <= canvas.height; j += gap) {
   for (let i = r; i + 2 * r <= canvas.width; i += gap) {
