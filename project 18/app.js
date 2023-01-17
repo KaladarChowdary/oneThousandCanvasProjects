@@ -18,7 +18,6 @@ canvas.addEventListener("mousedown", function (evt) {
     let dx = evt.clientX - circle.x;
     let dy = evt.clientY - circle.y;
     let distance = Math.sqrt(dx * dx + dy * dy);
-    // console.log(`${distance}, ${circle.radius}`);
 
     if (distance < circle.radius) {
       isDragging = true;
@@ -32,19 +31,21 @@ window.addEventListener("mousemove", function (evt) {
   if (isDragging) {
     currentCircle.x = evt.clientX;
     currentCircle.y = evt.clientY;
-    animate();
   }
 });
 
 window.addEventListener("mouseup", function () {
   isDragging = false;
+  currentCircle = undefined;
 });
 
 window.addEventListener("keydown", function (evt) {
   if (evt.key === "Enter") {
     circleArr.forEach((circle) => {
-      circle.dx = 2 * (0.5 - Math.random());
-      circle.dy = 2 * (0.5 - Math.random());
+      circle.dx = 3 * (Math.random() - 0.5);
+      circle.dy = 3 * (Math.random() - 0.5);
+      // circle.dx = 1;
+      // circle.dy = 0;
     });
   }
 });
@@ -67,8 +68,10 @@ class Circle {
   }
 
   update(circleArr) {
-    this.x += this.dx;
-    this.y += this.dy;
+    if (this !== currentCircle) {
+      this.x += this.dx;
+      this.y += this.dy;
+    }
 
     if (this.x - this.radius <= 0) {
       this.dx = Math.abs(this.dx);
@@ -103,8 +106,6 @@ class Circle {
 window.addEventListener("dblclick", function (evt) {
   let newCircle = new Circle(evt.clientX, evt.clientY, 10, "black");
   circleArr.push(newCircle);
-  // console.log(`${evt.clientX}, ${evt.clientY}`);
-  // console.log(`${newCircle.x}, ${newCircle.y}`);
 });
 
 function animate() {
@@ -113,6 +114,7 @@ function animate() {
 
   for (let i = 0; i < circleArr.length; i++) {
     circleArr[i].update(circleArr);
+    console.log(i);
   }
 }
 animate();
