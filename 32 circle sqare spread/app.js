@@ -2,6 +2,10 @@ const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 maxify();
 const mouse = { x: -1000, y: -1000 };
+let size, gap;
+size = 50;
+gap = 10;
+let coordinates, squareArray;
 
 window.addEventListener("mousemove", function (evt) {
   mouse.x = evt.pageX;
@@ -11,6 +15,8 @@ window.addEventListener("mousemove", function (evt) {
 // Need to add all the others
 window.addEventListener("resize", function () {
   maxify();
+  coordinates = giveCoordinates(size, gap);
+  squareArray = squaresWithCoordinates(coordinates, size);
 });
 
 window.addEventListener("mousemove", function (evt) {
@@ -19,7 +25,7 @@ window.addEventListener("mousemove", function (evt) {
 });
 
 class Square {
-  constructor(size = 50, x = middleX() - size / 2, y = middleY() - size / 2) {
+  constructor(x = middleX(), y = middleY(), size = 50) {
     this.size = size;
     this.x = x;
     this.y = y;
@@ -63,8 +69,8 @@ class Square {
   // Finds angle from centre of ball to center of square and Offset X and Y points assuming ball centre as zero, zero
   getOffsetsFromBallCenter() {
     this.angleFromBall = getAngle(ball.x, ball.y, this.centreX, this.centreY);
-    this.offsetX = ball.radius * Math.cos(bTheta);
-    this.offsetY = ball.radius * Math.sin(bTheta);
+    this.offsetX = ball.radius * Math.cos(this.angleFromBall);
+    this.offsetY = ball.radius * Math.sin(this.angleFromBall);
   }
   drawLineToBall() {
     this.getOffsetsFromBallCenter();
@@ -88,8 +94,8 @@ class Square {
   angleEndInsideSquare() {
     this.getOffsetsFromBallCenter();
     return onSquare(
-      ball.x + this.dx,
-      ball.y - this.dy,
+      ball.x + this.offsetX,
+      ball.y - this.offsetY,
       this.x,
       this.y,
       this.size
@@ -98,7 +104,8 @@ class Square {
   // Only two conditions to detect intersection
   // Not enough, need more clarity
   doesBallIntersect() {
-    return this.isSqrCtrInCircle() || this.angleEndInsideSquare();
+    // console.log(this.angleEndInsideSquare());
+    return this.angleEndInsideSquare() || this.isSqrCtrInCircle();
   }
   fill() {
     this.updateFillColor();
@@ -109,8 +116,8 @@ class Square {
     return getAngle(
       this.centreX,
       this.centreY,
-      ball.x + this.dx,
-      ball.y - this.dy
+      ball.x + this.offsetX,
+      ball.y - this.offsetY
     );
   }
   // ERROR IN REFLECTION MOSTLY BECAUSE OF THIS. 'doesBallIntersect()' may not be covering all the cases
@@ -155,9 +162,11 @@ class Square {
   update() {
     this.updateBeforeandAfter();
 
-    if (this.isMouseOnMe() && this.before === false) {
+    if (this.isMouseOnMe()) {
       this.fill();
-      this.reflectOnCollision();
+      if (this.before === false && this.current === true) {
+        this.reflectOnCollision();
+      }
     } else {
       this.drawBorder();
     }
@@ -171,16 +180,11 @@ class Square {
 //
 // NEED TO REFACTOR
 class Ball {
-  constructor(
-    x = middleX(),
-    y = middleY(),
-    radius = 30,
-    color = "rgba(256, 0, 0, 1)"
-  ) {
+  constructor(x = middleX(), y = middleY(), radius = 30, color = "red") {
     this.x = x;
     this.y = y;
-    this.color = color;
     this.radius = radius;
+    this.color = color;
 
     this.dx = 5 * (0.5 - Math.random());
     this.dy = 5 * (0.5 - Math.random());
@@ -189,11 +193,11 @@ class Ball {
   beginPath() {
     ctx.beginPath();
   }
-  lineCircle() {
+  drawOutlineOfCircle() {
     ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
   }
-  lineColor() {
-    ctx.strokeStyle = "rgba(256, 256, 256, 1)";
+  applyLineColor() {
+    ctx.strokeStyle = this.color;
   }
   stroke() {
     ctx.stroke();
@@ -223,34 +227,37 @@ class Ball {
   }
   draw() {
     this.beginPath();
-    this.lineColor();
-    this.lineCircle();
+    this.applyLineColor();
+    this.drawOutlineOfCircle();
     this.fillColor();
     this.fill();
     this.stroke();
   }
   update() {
-    this.bounceCanvas();
     this.updateXandY();
     this.draw();
+    this.bounceCanvas();
   }
 }
 //
+
 //
 //
 //
 //
 //
 // LAST BEFORE THE FUNCTIONS
+coordinates = giveCoordinates(size, gap);
+squareArray = squaresWithCoordinates(coordinates, size);
 let ball = new Ball(80, 80);
-let square = new Square();
 function animate() {
   requestAnimationFrame(animate);
   fillCanvas("white");
 
-  square.update();
+  squareArray.forEach((sqare) => {
+    sqare.update();
+  });
   ball.update();
-  drawAxes();
 }
 animate();
 //
