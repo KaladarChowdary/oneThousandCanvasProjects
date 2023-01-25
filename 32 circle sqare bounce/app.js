@@ -5,6 +5,10 @@ const mouse = { x: -1000, y: -1000 };
 let squareColor = "green";
 let circleColor = "red";
 
+let ball, size, gap, coordinates, arr;
+size = 20;
+gap = 2;
+
 window.addEventListener("mousemove", function (evt) {
   mouse.x = evt.pageX;
   mouse.y = evt.pageY;
@@ -12,6 +16,8 @@ window.addEventListener("mousemove", function (evt) {
 
 window.addEventListener("resize", function () {
   maxify();
+  coordinates = giveCoordinates(size, gap);
+  arr = makeSquares(coordinates, size);
 });
 
 window.addEventListener("mousemove", function (evt) {
@@ -71,8 +77,7 @@ window.addEventListener("mousemove", function (evt) {
 // }
 
 class Square {
-  constructor(size = 50, x = middleX() - size / 2, y = middleY() - size / 2) {
-    console.log(x, y, size);
+  constructor(x = middleX(), y = middleY(), size = 20) {
     this.x = x;
     this.y = y;
     this.size = size;
@@ -81,7 +86,7 @@ class Square {
     this.centreY = this.y + this.size / 2;
 
     this.opacity = 1;
-    this.fillColor = `rgba(256, 256, 256, ${this.opacity})`;
+    this.fillColor = `rgba(0, 0, 0, ${this.opacity})`;
     this.strokeColor = `rgba(0, 0, 0, 1)`;
   }
   beginPath() {
@@ -94,7 +99,7 @@ class Square {
     ctx.strokeRect(this.x, this.y, this.size, this.size);
   }
   updateFillColor() {
-    ctx.fillStyle = `rgba(256, 256, 256, ${this.opacity})`;
+    ctx.fillStyle = `rgba(0, 0, 0, ${this.opacity})`;
   }
   fillRect() {
     ctx.fillRect(this.x, this.y, this.size, this.size);
@@ -112,8 +117,6 @@ class Square {
     this.closePath();
   }
   drawLineToBall() {
-    this.getDxAndDy();
-
     ctx.beginPath();
     ctx.moveTo(this.centreX, this.centreY);
 
@@ -121,14 +124,17 @@ class Square {
     ctx.stroke();
     ctx.closePath();
   }
+
   getDxAndDy() {
     let bTheta = getAngle(ball.x, ball.y, this.centreX, this.centreY);
     this.dx = ball.radius * Math.cos(bTheta);
     this.dy = ball.radius * Math.sin(bTheta);
   }
+
   doesBallIntersect() {
     return this.isSquareInsideCircle() || this.isBallEdgeOnSquare();
   }
+
   isSquareInsideCircle() {
     return insideCircle(
       this.centreX,
@@ -138,6 +144,7 @@ class Square {
       ball.radius
     );
   }
+
   isBallEdgeOnSquare() {
     return onSquare(
       ball.x + this.dx,
@@ -155,18 +162,14 @@ class Square {
     this.updateFillColor();
     this.fillRect();
   }
-  getAngleOfTouch() {
-    this.getDxAndDy();
-    return getAngle(
-      this.centreX,
-      this.centreY,
-      ball.x + this.dx,
-      ball.y - this.dy
-    );
-  }
   update() {
-    console.log(radToDeg(this.getAngleOfTouch()));
-    this.drawLineToBall();
+    this.getDxAndDy();
+    if (this.doesBallIntersect()) {
+      this.opacity = 0.1;
+    } else {
+      this.opacity = Math.min(1, this.opacity + 0.005);
+    }
+
     this.drawAndFill();
   }
 }
@@ -175,7 +178,7 @@ class Ball {
     x = middleX(),
     y = middleY(),
     radius = 30,
-    color = "rgba(256, 0, 0, 1)"
+    color = "rgba(256, 256, 256, 1)"
   ) {
     this.x = x;
     this.y = y;
@@ -225,28 +228,24 @@ class Ball {
     this.beginPath();
     this.lineColor();
     this.lineCircle();
-    this.fillColor();
-    this.fill();
     this.stroke();
   }
   update() {
+    this.updateXandY();
     this.detectBorderCollision();
     this.draw();
   }
 }
 // LAST BEFORE THE FUNCTIONS
-let ball = new Ball(80, 80);
-let square = new Square();
+ball = new Ball();
+coordinates = giveCoordinates(size, gap);
+arr = makeSquares(coordinates, size);
 function animate() {
   requestAnimationFrame(animate);
   fillCanvas("white");
 
-  ball.x = mouse.x;
-  ball.y = mouse.y;
-
-  square.update();
+  updateAll(arr);
   ball.update();
-  drawAxes();
 }
 animate();
 //
@@ -387,21 +386,6 @@ function onSquare(x1, y1, x2, y2, size2) {
 function isInsideCircle(x1, y1, x2, y2, r2) {
   return getDistance(x1, y1, x2, y2) <= r2;
 }
-
-function drawAxes() {
-  ctx.beginPath();
-  ctx.strokeStyle = "black";
-  ctx.moveTo(0, middleY());
-  ctx.lineTo(endX(), middleY());
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.strokeStyle = "black";
-  ctx.moveTo(middleX(), 0);
-  ctx.lineTo(middleX(), endY());
-  ctx.stroke();
-}
-
 // 0 - 360 : ANGLE BETWEEN TWO POINTS
 
 function getAngleInDegrees(x1, y1, x2, y2) {
