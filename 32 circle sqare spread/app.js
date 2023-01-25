@@ -2,22 +2,15 @@ const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 maxify();
 const mouse = { x: -1000, y: -1000 };
-let squareColor = "green";
-let circleColor = "red";
-
-let ball, size, gap, coordinates, arr;
-size = 20;
-gap = 2;
 
 window.addEventListener("mousemove", function (evt) {
   mouse.x = evt.pageX;
   mouse.y = evt.pageY;
 });
 
+// Need to add all the others
 window.addEventListener("resize", function () {
   maxify();
-  coordinates = giveCoordinates(size, gap);
-  arr = makeSquares(coordinates, size);
 });
 
 window.addEventListener("mousemove", function (evt) {
@@ -25,69 +18,20 @@ window.addEventListener("mousemove", function (evt) {
   mouse.y = evt.pageY;
 });
 
-// CLASS
-// class Square {
-//   constructor(x = middleX(), y = middleY(), size = 20, color = "darkgreen") {
-//     this.x = x;
-//     this.y = y;
-//     this.size = size;
-//     this.color = color;
-//   }
-//   beginPath() {
-//     ctx.beginPath();
-//   }
-//   applyStrokeColor() {
-//     ctx.strokeStyle = this.color;
-//   }
-//   strokeRect() {
-//     ctx.strokeRect(this.x, this.y, this.size, this.size);
-//   }
-//   updateFillColor() {
-//     ctx.fillStyle = this.color;
-//   }
-//   fillRect() {
-//     ctx.fillRect(this.x, this.y, this.size, this.size);
-//   }
-//   closePath() {
-//     ctx.closePath();
-//   }
-
-//   isMouseOnMe() {
-//     return onSquare(mouse.x, mouse.y, this.x, this.y, this.size);
-//   }
-
-//   border() {
-//     this.beginPath();
-//     this.applyStrokeColor();
-//     this.strokeRect();
-//     this.closePath();
-//   }
-//   fill() {
-//     this.updateFillColor();
-//     this.fillRect();
-//   }
-
-//   update() {
-//     if (this.isMouseOnMe()) {
-//       this.fill();
-//     } else {
-//       this.border();
-//     }
-//   }
-// }
-
 class Square {
-  constructor(x = middleX(), y = middleY(), size = 20) {
+  constructor(size = 50, x = middleX() - size / 2, y = middleY() - size / 2) {
+    this.size = size;
     this.x = x;
     this.y = y;
-    this.size = size;
 
     this.centreX = this.x + this.size / 2;
     this.centreY = this.y + this.size / 2;
 
-    this.opacity = 1;
-    this.fillColor = `rgba(0, 0, 0, ${this.opacity})`;
-    this.strokeColor = `rgba(0, 0, 0, 1)`;
+    this.before = false;
+    this.current = false;
+
+    this.fillColor = "black";
+    this.strokeColor = "black";
   }
   beginPath() {
     ctx.beginPath();
@@ -99,7 +43,7 @@ class Square {
     ctx.strokeRect(this.x, this.y, this.size, this.size);
   }
   updateFillColor() {
-    ctx.fillStyle = `rgba(0, 0, 0, ${this.opacity})`;
+    ctx.fillStyle = this.fillColor;
   }
   fillRect() {
     ctx.fillRect(this.x, this.y, this.size, this.size);
@@ -107,36 +51,33 @@ class Square {
   closePath() {
     ctx.closePath();
   }
-  isMouseOnMe() {
-    return onSquare(mouse.x, mouse.y, this.x, this.y, this.size);
-  }
   drawBorder() {
     this.beginPath();
     this.applyStrokeColor();
     this.strokeRect();
     this.closePath();
   }
+  isMouseOnMe() {
+    return onSquare(mouse.x, mouse.y, this.x, this.y, this.size);
+  }
+  // Finds angle from centre of ball to center of square and Offset X and Y points assuming ball centre as zero, zero
+  getOffsetsFromBallCenter() {
+    this.angleFromBall = getAngle(ball.x, ball.y, this.centreX, this.centreY);
+    this.offsetX = ball.radius * Math.cos(bTheta);
+    this.offsetY = ball.radius * Math.sin(bTheta);
+  }
   drawLineToBall() {
+    this.getOffsetsFromBallCenter();
+
     ctx.beginPath();
     ctx.moveTo(this.centreX, this.centreY);
 
-    ctx.lineTo(ball.x + this.dx, ball.y - this.dy);
+    ctx.lineTo(ball.x + this.offsetX, ball.y - this.offsetY);
     ctx.stroke();
     ctx.closePath();
   }
-
-  getDxAndDy() {
-    let bTheta = getAngle(ball.x, ball.y, this.centreX, this.centreY);
-    this.dx = ball.radius * Math.cos(bTheta);
-    this.dy = ball.radius * Math.sin(bTheta);
-  }
-
-  doesBallIntersect() {
-    return this.isSquareInsideCircle() || this.isBallEdgeOnSquare();
-  }
-
-  isSquareInsideCircle() {
-    return insideCircle(
+  isSqrCtrInCircle() {
+    return isInsideCircle(
       this.centreX,
       this.centreY,
       ball.x,
@@ -144,8 +85,8 @@ class Square {
       ball.radius
     );
   }
-
-  isBallEdgeOnSquare() {
+  angleEndInsideSquare() {
+    this.getOffsetsFromBallCenter();
     return onSquare(
       ball.x + this.dx,
       ball.y - this.dy,
@@ -154,31 +95,87 @@ class Square {
       this.size
     );
   }
-  drawAndFill() {
-    this.fill();
-    this.drawBorder();
+  // Only two conditions to detect intersection
+  // Not enough, need more clarity
+  doesBallIntersect() {
+    return this.isSqrCtrInCircle() || this.angleEndInsideSquare();
   }
   fill() {
     this.updateFillColor();
     this.fillRect();
   }
-  update() {
-    this.getDxAndDy();
-    if (this.doesBallIntersect()) {
-      this.opacity = 0.1;
-    } else {
-      this.opacity = Math.min(1, this.opacity + 0.005);
-    }
+  getAngleOfTouch() {
+    this.getOffsetsFromBallCenter();
+    return getAngle(
+      this.centreX,
+      this.centreY,
+      ball.x + this.dx,
+      ball.y - this.dy
+    );
+  }
+  // ERROR IN REFLECTION MOSTLY BECAUSE OF THIS. 'doesBallIntersect()' may not be covering all the cases
+  // ALWAYS AT THE BEGINING OF UPDATE AND NO WHERE ELSE
+  updateBeforeandAfter() {
+    this.before = this.current;
+    this.current = this.doesBallIntersect();
+  }
+  drawAndFill() {
+    this.fill();
+    this.drawBorder();
+  }
+  // Assumes before and after are already updated
+  detectCollision() {
+    return !this.before && this.current;
+  }
+  // Assumes before and after are already updated.
+  // Detects side of collision and Changes ball direction
+  reflectOnCollision() {
+    if (this.detectCollision()) {
+      this.angle = radToDeg(this.getAngleOfTouch());
+      this.angle = Math.floor(this.angle);
 
-    this.drawAndFill();
+      if (between(360 - 45, 360, this.angle)) {
+        ball.dx = positive(ball.dx);
+      } else if (between(-1, 45, this.angle)) {
+        ball.dx = positive(ball.dx);
+      } else if (between(90 - 45, 90 + 45, this.angle)) {
+        ball.dy = negative(ball.dy);
+      } else if (between(180 - 45, 180 + 45, this.angle)) {
+        ball.dx = negative(ball.dx);
+      } else if (between(270 - 45, 270 + 45, this.angle)) {
+        ball.dy = positive(ball.dy);
+      } else {
+        console.log("----", this.angle);
+        ball.dx = -ball.dx;
+        ball.dy = -ball.dy;
+      }
+    }
+  }
+
+  update() {
+    this.updateBeforeandAfter();
+
+    if (this.isMouseOnMe() && this.before === false) {
+      this.fill();
+      this.reflectOnCollision();
+    } else {
+      this.drawBorder();
+    }
   }
 }
+
+//
+//
+//
+//
+//
+// NEED TO REFACTOR
 class Ball {
   constructor(
     x = middleX(),
     y = middleY(),
     radius = 30,
-    color = "rgba(256, 256, 256, 1)"
+    color = "rgba(256, 0, 0, 1)"
   ) {
     this.x = x;
     this.y = y;
@@ -207,7 +204,7 @@ class Ball {
   fill() {
     ctx.fill();
   }
-  detectBorderCollision() {
+  bounceCanvas() {
     if (this.y + this.radius >= canvas.height) {
       this.dy = negative(this.dy);
     } else if (this.y - this.radius <= 0) {
@@ -228,24 +225,32 @@ class Ball {
     this.beginPath();
     this.lineColor();
     this.lineCircle();
+    this.fillColor();
+    this.fill();
     this.stroke();
   }
   update() {
+    this.bounceCanvas();
     this.updateXandY();
-    this.detectBorderCollision();
     this.draw();
   }
 }
+//
+//
+//
+//
+//
+//
 // LAST BEFORE THE FUNCTIONS
-ball = new Ball();
-coordinates = giveCoordinates(size, gap);
-arr = makeSquares(coordinates, size);
+let ball = new Ball(80, 80);
+let square = new Square();
 function animate() {
   requestAnimationFrame(animate);
   fillCanvas("white");
 
-  updateAll(arr);
+  square.update();
   ball.update();
+  drawAxes();
 }
 animate();
 //
@@ -333,7 +338,7 @@ function negative(num) {
   return -Math.abs(num);
 }
 
-function insideCircle(x1, y1, x2, y2, r2) {
+function isInsideCircle(x1, y1, x2, y2, r2) {
   return getDistance(x1, y1, x2, y2) <= r2;
 }
 
@@ -360,7 +365,7 @@ function giveCoordinates(size, gap) {
   return arr;
 }
 
-function makeSquares(arr, size) {
+function squaresWithCoordinates(arr, size) {
   let arr2 = [];
 
   arr.forEach(([x, y]) => {
@@ -383,14 +388,29 @@ function onSquare(x1, y1, x2, y2, size2) {
   return true;
 }
 
-function isInsideCircle(x1, y1, x2, y2, r2) {
-  return getDistance(x1, y1, x2, y2) <= r2;
-}
-// 0 - 360 : ANGLE BETWEEN TWO POINTS
+function drawAxes() {
+  ctx.beginPath();
+  ctx.strokeStyle = "black";
+  ctx.moveTo(0, middleY());
+  ctx.lineTo(endX(), middleY());
+  ctx.stroke();
 
+  ctx.beginPath();
+  ctx.strokeStyle = "black";
+  ctx.moveTo(middleX(), 0);
+  ctx.lineTo(middleX(), endY());
+  ctx.stroke();
+}
+
+function between(a, b, x) {
+  return a < x && x < b;
+}
+
+// 0 - 360 : from x1,y1 draw horizontal and go to x2, y2 in counterclockwise direction
 function getAngleInDegrees(x1, y1, x2, y2) {
   return radToDeg(getAngle(x1, y1, x2, y2));
 }
+// 0 to 2*PI in counter clockwise direction
 function getAngle(x1, y1, x2, y2) {
   let xdiff, ydiff, theta, updatedTheta;
   xdiff = dx(x1, x2);
@@ -407,6 +427,7 @@ function dy(y1, y2) {
   return Math.abs(y1 - y2);
 }
 
+// assuming dx and dy both are positive
 function getTheta(dx, dy) {
   return Math.atan2(dy, dx);
 }
@@ -415,6 +436,7 @@ function radToDeg(angle) {
   return (angle * 180) / Math.PI;
 }
 
+// Given angle, use x1, y1 and x2, y2 to convert into proper angle in coordinate system
 function updateThetaWithQuadrants(x1, y1, x2, y2, theta) {
   let i = getQuadrant(x1, y1, x2, y2);
 
@@ -431,6 +453,7 @@ function updateThetaWithQuadrants(x1, y1, x2, y2, theta) {
   return theta;
 }
 
+// Quadrant according to coordinate system
 function getQuadrant(x1, y1, x2, y2) {
   if (x2 > x1 && y2 <= y1) return 1;
   else if (x2 <= x1 && y2 < y1) return 2;
