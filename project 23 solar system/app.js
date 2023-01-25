@@ -1,5 +1,6 @@
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
+let firstTime = true;
 let sparkle = [];
 let stars = [];
 let x, y, r;
@@ -18,6 +19,13 @@ window.addEventListener("resize", function () {
     y = randRange(r, canvas.height - r);
 
     stars.push(new Circle(x, y, r, "rgba(255, 255, 255, 0.3)"));
+  }
+});
+
+window.addEventListener("dblclick", function () {
+  if (firstTime) {
+    firstTime = false;
+    animate();
   }
 });
 
@@ -129,4 +137,3 @@ function animate() {
   planet.update();
   satellite.update();
 }
-animate();
