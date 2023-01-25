@@ -80,9 +80,12 @@ class Square {
     this.centreX = this.x + this.size / 2;
     this.centreY = this.y + this.size / 2;
 
+    this.before = false;
+    this.current = false;
+
     this.opacity = 1;
-    this.fillColor = `rgba(256, 256, 256, ${this.opacity})`;
-    this.strokeColor = `rgba(0, 0, 0, 1)`;
+    this.fillColor = "black";
+    this.strokeColor = "black";
   }
   beginPath() {
     ctx.beginPath();
@@ -94,7 +97,7 @@ class Square {
     ctx.strokeRect(this.x, this.y, this.size, this.size);
   }
   updateFillColor() {
-    ctx.fillStyle = `rgba(256, 256, 256, ${this.opacity})`;
+    ctx.fillStyle = this.fillColor;
   }
   fillRect() {
     ctx.fillRect(this.x, this.y, this.size, this.size);
@@ -139,6 +142,7 @@ class Square {
     );
   }
   isBallEdgeOnSquare() {
+    this.getDxAndDy();
     return onSquare(
       ball.x + this.dx,
       ball.y - this.dy,
@@ -164,10 +168,44 @@ class Square {
       ball.y - this.dy
     );
   }
+  updateBeforeandAfter() {
+    this.before = this.current;
+    this.current = this.doesBallIntersect();
+  }
+  detectCollision() {
+    return !this.before && this.current;
+  }
+  reflectOnCollision() {
+    if (this.detectCollision()) {
+      this.angle = radToDeg(this.getAngleOfTouch());
+      this.angle = Math.floor(this.angle);
+      console.log(this.angle);
+
+      if (between(360 - 45, 360, this.angle)) {
+        ball.dx = positive(ball.dx);
+      } else if (between(-1, 45, this.angle)) {
+        ball.dx = positive(ball.dx);
+      } else if (between(90 - 45, 90 + 45, this.angle)) {
+        ball.dy = negative(ball.dy);
+      } else if (between(180 - 45, 180 + 45, this.angle)) {
+        ball.dx = negative(ball.dx);
+      } else if (between(270 - 45, 270 + 45, this.angle)) {
+        ball.dy = positive(ball.dy);
+      } else {
+        console.log("exactly at middle", this.angle);
+        ball.dx = -ball.dx;
+        ball.dy = -ball.dy;
+      }
+    }
+  }
   update() {
-    console.log(radToDeg(this.getAngleOfTouch()));
-    this.drawLineToBall();
-    this.drawAndFill();
+    this.updateBeforeandAfter();
+    if (this.isMouseOnMe() && this.before === false) {
+      this.fill();
+      this.reflectOnCollision();
+    } else {
+      this.drawBorder();
+    }
   }
 }
 class Ball {
@@ -204,7 +242,7 @@ class Ball {
   fill() {
     ctx.fill();
   }
-  detectBorderCollision() {
+  bounceCanvas() {
     if (this.y + this.radius >= canvas.height) {
       this.dy = negative(this.dy);
     } else if (this.y - this.radius <= 0) {
@@ -230,7 +268,8 @@ class Ball {
     this.stroke();
   }
   update() {
-    this.detectBorderCollision();
+    this.bounceCanvas();
+    this.updateXandY();
     this.draw();
   }
 }
@@ -240,9 +279,6 @@ let square = new Square();
 function animate() {
   requestAnimationFrame(animate);
   fillCanvas("white");
-
-  ball.x = mouse.x;
-  ball.y = mouse.y;
 
   square.update();
   ball.update();
@@ -400,6 +436,10 @@ function drawAxes() {
   ctx.moveTo(middleX(), 0);
   ctx.lineTo(middleX(), endY());
   ctx.stroke();
+}
+
+function between(a, b, x) {
+  return a < x && x < b;
 }
 
 // 0 - 360 : ANGLE BETWEEN TWO POINTS
