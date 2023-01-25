@@ -39,6 +39,26 @@ window.addEventListener("mousemove", function (evt) {
   mouse.y = evt.pageY;
 });
 
+// CLASS
+class line {
+  constructor(initX, initY) {
+    this.initX = initX;
+    this.initY = initY;
+
+    this.dx = 1;
+    this.dy = -1;
+  }
+
+  updateXandY() {
+    x += dx;
+    y += dy;
+  }
+
+  bounceFromBoundary(){
+    if(x <= 0)
+  }
+}
+
 //
 //
 //
@@ -229,25 +249,12 @@ function getQuadrant(x1, y1, x2, y2) {
   else if (x2 >= x1 && y2 > y1) return 4;
 }
 
-//
 function pointAtCentre() {
   ctx.beginPath();
   ctx.arc(middleX(), middleY(), 5, 0, 2 * Math.PI);
   ctx.fillStyle = "black";
   ctx.fill();
 }
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 function animate() {
   requestAnimationFrame(animate);
