@@ -1,243 +1,54 @@
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 maxify();
-const mouse = { x: -1000, y: -1000 };
-let squareColor = "green";
-let circleColor = "red";
+const mouse = { x: undefined, y: undefined };
+let bnova, sArr;
 
 window.addEventListener("mousemove", function (evt) {
   mouse.x = evt.pageX;
   mouse.y = evt.pageY;
 });
 
+// Need to add all the others
 window.addEventListener("resize", function () {
   maxify();
 });
 
-window.addEventListener("mousemove", function (evt) {
-  mouse.x = evt.pageX;
-  mouse.y = evt.pageY;
-});
-
-// CLASS
-// class Square {
-//   constructor(x = middleX(), y = middleY(), size = 20, color = "darkgreen") {
-//     this.x = x;
-//     this.y = y;
-//     this.size = size;
-//     this.color = color;
-//   }
-//   beginPath() {
-//     ctx.beginPath();
-//   }
-//   applyStrokeColor() {
-//     ctx.strokeStyle = this.color;
-//   }
-//   strokeRect() {
-//     ctx.strokeRect(this.x, this.y, this.size, this.size);
-//   }
-//   updateFillColor() {
-//     ctx.fillStyle = this.color;
-//   }
-//   fillRect() {
-//     ctx.fillRect(this.x, this.y, this.size, this.size);
-//   }
-//   closePath() {
-//     ctx.closePath();
-//   }
-
-//   isMouseOnMe() {
-//     return onSquare(mouse.x, mouse.y, this.x, this.y, this.size);
-//   }
-
-//   border() {
-//     this.beginPath();
-//     this.applyStrokeColor();
-//     this.strokeRect();
-//     this.closePath();
-//   }
-//   fill() {
-//     this.updateFillColor();
-//     this.fillRect();
-//   }
-
-//   update() {
-//     if (this.isMouseOnMe()) {
-//       this.fill();
-//     } else {
-//       this.border();
-//     }
-//   }
-// }
-
-class Square {
-  constructor(size = 50, x = middleX() - size / 2, y = middleY() - size / 2) {
-    console.log(x, y, size);
+//
+//
+//
+//
+//
+// NEED TO REFACTOR
+class BlackNova {
+  constructor(x = middleX(), y = middleY(), radius = 20, range = 50) {
     this.x = x;
     this.y = y;
-    this.size = size;
-
-    this.centreX = this.x + this.size / 2;
-    this.centreY = this.y + this.size / 2;
-
-    this.before = false;
-    this.current = false;
-
-    this.opacity = 1;
-    this.fillColor = "black";
-    this.strokeColor = "black";
-  }
-  beginPath() {
-    ctx.beginPath();
-  }
-  applyStrokeColor() {
-    ctx.strokeStyle = this.strokeColor;
-  }
-  strokeRect() {
-    ctx.strokeRect(this.x, this.y, this.size, this.size);
-  }
-  updateFillColor() {
-    ctx.fillStyle = this.fillColor;
-  }
-  fillRect() {
-    ctx.fillRect(this.x, this.y, this.size, this.size);
-  }
-  closePath() {
-    ctx.closePath();
-  }
-  isMouseOnMe() {
-    return onSquare(mouse.x, mouse.y, this.x, this.y, this.size);
-  }
-  drawBorder() {
-    this.beginPath();
-    this.applyStrokeColor();
-    this.strokeRect();
-    this.closePath();
-  }
-  drawLineToBall() {
-    this.getDxAndDy();
-
-    ctx.beginPath();
-    ctx.moveTo(this.centreX, this.centreY);
-
-    ctx.lineTo(ball.x + this.dx, ball.y - this.dy);
-    ctx.stroke();
-    ctx.closePath();
-  }
-  getDxAndDy() {
-    let bTheta = getAngle(ball.x, ball.y, this.centreX, this.centreY);
-    this.dx = ball.radius * Math.cos(bTheta);
-    this.dy = ball.radius * Math.sin(bTheta);
-  }
-  doesBallIntersect() {
-    return this.isSquareInsideCircle() || this.isBallEdgeOnSquare();
-  }
-  isSquareInsideCircle() {
-    return insideCircle(
-      this.centreX,
-      this.centreY,
-      ball.x,
-      ball.y,
-      ball.radius
-    );
-  }
-  isBallEdgeOnSquare() {
-    this.getDxAndDy();
-    return onSquare(
-      ball.x + this.dx,
-      ball.y - this.dy,
-      this.x,
-      this.y,
-      this.size
-    );
-  }
-  drawAndFill() {
-    this.fill();
-    this.drawBorder();
-  }
-  fill() {
-    this.updateFillColor();
-    this.fillRect();
-  }
-  getAngleOfTouch() {
-    this.getDxAndDy();
-    return getAngle(
-      this.centreX,
-      this.centreY,
-      ball.x + this.dx,
-      ball.y - this.dy
-    );
-  }
-  updateBeforeandAfter() {
-    this.before = this.current;
-    this.current = this.doesBallIntersect();
-  }
-  detectCollision() {
-    return !this.before && this.current;
-  }
-  reflectOnCollision() {
-    if (this.detectCollision()) {
-      this.angle = radToDeg(this.getAngleOfTouch());
-      this.angle = Math.floor(this.angle);
-      console.log(this.angle);
-
-      if (between(360 - 45, 360, this.angle)) {
-        ball.dx = positive(ball.dx);
-      } else if (between(-1, 45, this.angle)) {
-        ball.dx = positive(ball.dx);
-      } else if (between(90 - 45, 90 + 45, this.angle)) {
-        ball.dy = negative(ball.dy);
-      } else if (between(180 - 45, 180 + 45, this.angle)) {
-        ball.dx = negative(ball.dx);
-      } else if (between(270 - 45, 270 + 45, this.angle)) {
-        ball.dy = positive(ball.dy);
-      } else {
-        console.log("exactly at middle", this.angle);
-        ball.dx = -ball.dx;
-        ball.dy = -ball.dy;
-      }
-    }
-  }
-  update() {
-    this.updateBeforeandAfter();
-    if (this.isMouseOnMe() && this.before === false) {
-      this.fill();
-      this.reflectOnCollision();
-    } else {
-      this.drawBorder();
-    }
-  }
-}
-class Ball {
-  constructor(
-    x = middleX(),
-    y = middleY(),
-    radius = 30,
-    color = "rgba(256, 0, 0, 1)"
-  ) {
-    this.x = x;
-    this.y = y;
-    this.color = color;
     this.radius = radius;
+    this.range = range;
+    this.color = "black";
+    this.rangeColor = "rgba(0, 0, 0, 0.2)";
 
-    this.dx = 5 * (0.5 - Math.random());
-    this.dy = 5 * (0.5 - Math.random());
+    this.vibrateX = 2;
   }
 
   beginPath() {
     ctx.beginPath();
   }
-  lineCircle() {
+  drawOutline() {
     ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
   }
-  lineColor() {
-    ctx.strokeStyle = "rgba(256, 256, 256, 1)";
+  applyLineColor() {
+    ctx.strokeStyle = this.color;
   }
   stroke() {
     ctx.stroke();
   }
-  fillColor() {
+  applyFillColor() {
     ctx.fillStyle = this.color;
+  }
+  setLineWidth(width = 2) {
+    ctx.lineWidth = width;
   }
   fill() {
     ctx.fill();
@@ -255,36 +66,56 @@ class Ball {
       this.dx = positive(this.dx);
     }
   }
-  updateXandY() {
-    this.x += this.dx;
-    this.y += this.dy;
+  vibrate() {
+    this.x += this.vibrateX;
+    this.vibrateX = -this.vibrateX;
   }
   draw() {
     this.beginPath();
-    this.lineColor();
-    this.lineCircle();
-    this.fillColor();
-    this.fill();
+    this.drawOutline();
     this.stroke();
+    this.applyFillColor();
+    this.fill();
+    this.closePath();
+  }
+
+  closePath() {
+    ctx.closePath();
+  }
+  drawRange() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.range, 0, 2 * Math.PI);
+    ctx.fillStyle = this.rangeColor;
+    ctx.fill();
+  }
+
+  update() {
+    this.vibrate();
+    this.draw();
+    this.drawRange();
+    this.bounceCanvas();
+  }
+}
+
+class SpaceObject {
+  constructor() {
+    this.radius = randRange(1, 10);
+    this.x = getX(this.radius);
+    this.y = getY(this.radius);
+    this.color = randomColor();
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+    ctx.fillStyle = this.color;
+    ctx.fill();
   }
   update() {
-    this.bounceCanvas();
-    this.updateXandY();
     this.draw();
   }
 }
-// LAST BEFORE THE FUNCTIONS
-let ball = new Ball(80, 80);
-let square = new Square();
-function animate() {
-  requestAnimationFrame(animate);
-  fillCanvas("white");
 
-  square.update();
-  ball.update();
-  drawAxes();
-}
-animate();
 //
 //
 //
@@ -370,7 +201,7 @@ function negative(num) {
   return -Math.abs(num);
 }
 
-function insideCircle(x1, y1, x2, y2, r2) {
+function isInsideCircle(x1, y1, x2, y2, r2) {
   return getDistance(x1, y1, x2, y2) <= r2;
 }
 
@@ -397,7 +228,7 @@ function giveCoordinates(size, gap) {
   return arr;
 }
 
-function makeSquares(arr, size) {
+function squaresWithCoordinates(arr, size) {
   let arr2 = [];
 
   arr.forEach(([x, y]) => {
@@ -420,10 +251,6 @@ function onSquare(x1, y1, x2, y2, size2) {
   return true;
 }
 
-function isInsideCircle(x1, y1, x2, y2, r2) {
-  return getDistance(x1, y1, x2, y2) <= r2;
-}
-
 function drawAxes() {
   ctx.beginPath();
   ctx.strokeStyle = "black";
@@ -438,15 +265,30 @@ function drawAxes() {
   ctx.stroke();
 }
 
+function getX(radius) {
+  return randRange(radius + 5, endX() - radius - 5);
+}
+
+function getY(radius) {
+  return randRange(radius + 5, endY() - radius - 5);
+}
+
+function randomColor(opacity = 1) {
+  return `rgba(${randRange(0, 256)},${randRange(0, 256)},${randRange(
+    0,
+    256
+  )},${opacity})`;
+}
+
 function between(a, b, x) {
   return a < x && x < b;
 }
 
-// 0 - 360 : ANGLE BETWEEN TWO POINTS
-
+// 0 - 360 : from x1,y1 draw horizontal and go to x2, y2 in counterclockwise direction
 function getAngleInDegrees(x1, y1, x2, y2) {
   return radToDeg(getAngle(x1, y1, x2, y2));
 }
+// 0 to 2*PI in counter clockwise direction
 function getAngle(x1, y1, x2, y2) {
   let xdiff, ydiff, theta, updatedTheta;
   xdiff = dx(x1, x2);
@@ -463,6 +305,7 @@ function dy(y1, y2) {
   return Math.abs(y1 - y2);
 }
 
+// assuming dx and dy both are positive
 function getTheta(dx, dy) {
   return Math.atan2(dy, dx);
 }
@@ -471,6 +314,17 @@ function radToDeg(angle) {
   return (angle * 180) / Math.PI;
 }
 
+function arrayOfType(clss, n) {
+  let arr = [];
+
+  for (let i = 0; i < n; i++) {
+    arr.push(new clss());
+  }
+
+  return arr;
+}
+
+// Given angle, use x1, y1 and x2, y2 to convert into proper angle in coordinate system
 function updateThetaWithQuadrants(x1, y1, x2, y2, theta) {
   let i = getQuadrant(x1, y1, x2, y2);
 
@@ -487,9 +341,36 @@ function updateThetaWithQuadrants(x1, y1, x2, y2, theta) {
   return theta;
 }
 
+// Quadrant according to coordinate system
 function getQuadrant(x1, y1, x2, y2) {
   if (x2 > x1 && y2 <= y1) return 1;
   else if (x2 <= x1 && y2 < y1) return 2;
   else if (x2 < x1 && y2 >= y1) return 3;
   else if (x2 >= x1 && y2 > y1) return 4;
 }
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+// LAST BEFORE THE FUNCTIONS
+
+bnova = new BlackNova();
+sobj = arrayOfType(SpaceObject, 100);
+function animate() {
+  requestAnimationFrame(animate);
+  fillCanvas("white");
+
+  updateAll(sobj);
+  bnova.update();
+}
+animate();

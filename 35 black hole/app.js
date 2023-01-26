@@ -19,21 +19,21 @@ window.addEventListener("resize", function () {
 //
 //
 // NEED TO REFACTOR
-class Ball {
-  constructor(x = middleX(), y = middleY(), radius = 30, color = "red") {
+class blackNova {
+  constructor(x = middleX(), y = middleY(), radius = 30, range = 120) {
     this.x = x;
     this.y = y;
     this.radius = radius;
-    this.color = color;
+    this.range = range;
+    this.color = "black";
 
-    this.dx = 5 * (0.5 - Math.random());
-    this.dy = 5 * (0.5 - Math.random());
+    this.vibrateX = 5;
   }
 
   beginPath() {
     ctx.beginPath();
   }
-  drawOutlineOfCircle() {
+  drawOutline() {
     ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
   }
   applyLineColor() {
@@ -42,7 +42,7 @@ class Ball {
   stroke() {
     ctx.stroke();
   }
-  fillColor() {
+  applyFillColor() {
     ctx.fillStyle = this.color;
   }
   fill() {
@@ -61,21 +61,32 @@ class Ball {
       this.dx = positive(this.dx);
     }
   }
-  updateXandY() {
-    this.x += this.dx;
-    this.y += this.dy;
+  vibrate() {
+    this.x += this.vibrateX;
+    this.vibrateX = -this.vibrateX;
   }
   draw() {
     this.beginPath();
-    this.applyLineColor();
-    this.drawOutlineOfCircle();
-    this.fillColor();
+    this.drawOutline();
+    this.applyFillColor();
     this.fill();
-    this.stroke();
+    this.closePath();
   }
+
+  closePath() {
+    ctx.closePath();
+  }
+  drawRange() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.range, 0, 2 * Math.PI);
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fill();
+  }
+
   update() {
-    this.updateXandY();
+    this.vibrate();
     this.draw();
+    this.drawRange();
     this.bounceCanvas();
   }
 }
@@ -87,13 +98,12 @@ class Ball {
 //
 //
 // LAST BEFORE THE FUNCTIONS
-
-let ball = new Ball(80, 80);
+bnova = new blackNova();
 function animate() {
   requestAnimationFrame(animate);
   fillCanvas("white");
 
-  ball.update();
+  bnova.update();
 }
 animate();
 //
