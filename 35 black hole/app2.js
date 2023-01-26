@@ -1,8 +1,9 @@
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 maxify();
-const mouse = { x: undefined, y: undefined };
-let bnova, sArr;
+const mouse = { x: middleX(), y: middleY() };
+let bnova,
+  sArr = [];
 
 window.addEventListener("mousemove", function (evt) {
   mouse.x = evt.pageX;
@@ -12,6 +13,9 @@ window.addEventListener("mousemove", function (evt) {
 // Need to add all the others
 window.addEventListener("resize", function () {
   maxify();
+
+  bnova = new BlackNova();
+  sArr = arrayOfType(SpaceObject, 1000);
 });
 
 //
@@ -21,7 +25,7 @@ window.addEventListener("resize", function () {
 //
 // NEED TO REFACTOR
 class BlackNova {
-  constructor(x = middleX(), y = middleY(), radius = 20, range = 50) {
+  constructor(x = middleX(), y = middleY(), radius = 5, range = 5 * radius) {
     this.x = x;
     this.y = y;
     this.radius = radius;
@@ -78,7 +82,6 @@ class BlackNova {
     this.fill();
     this.closePath();
   }
-
   closePath() {
     ctx.closePath();
   }
@@ -89,7 +92,38 @@ class BlackNova {
     ctx.fill();
   }
 
+  attractLittle() {
+    sArr.forEach((object) => {
+      if (
+        getDistance(this.x, this.y, object.x, object.y) <= this.range &&
+        object.merged === false
+      ) {
+        let angle = getAngle(this.x, this.y, object.x, object.y);
+
+        let dx = 0.2 * Math.cos(angle);
+        let dy = 0.2 * Math.sin(angle);
+
+        object.x -= dx;
+        object.y += dy;
+
+        if (
+          getDistance(this.x, this.y, object.x, object.y) <= this.radius &&
+          object.merged === false
+        ) {
+          object.merged = true;
+          this.radius = radiusAfterMerge(this.radius, object.radius);
+          this.range = 5 * this.radius;
+        }
+      }
+    });
+  }
+
+  updateRange() {
+    this.range += 0.0001;
+  }
+
   update() {
+    this.attractLittle();
     this.vibrate();
     this.draw();
     this.drawRange();
@@ -98,14 +132,21 @@ class BlackNova {
 }
 
 class SpaceObject {
-  constructor() {
-    this.radius = randRange(1, 10);
+  constructor(index) {
+    this.radius = randRange(1, 5);
     this.x = getX(this.radius);
     this.y = getY(this.radius);
     this.color = randomColor();
+    this.index = index;
+    this.merged = false;
+
+    // this.angleToBnova = getAngle(bnova.x, bnova.y, this.x, this.y);
+    // this.closerX = Math.cos(this.angleToBnova);
+    // this.closerY = -Math.sin(this.angleToBnova);
   }
 
   draw() {
+    if (this.merged) return;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
     ctx.fillStyle = this.color;
@@ -318,10 +359,14 @@ function arrayOfType(clss, n) {
   let arr = [];
 
   for (let i = 0; i < n; i++) {
-    arr.push(new clss());
+    arr.push(new clss(i));
   }
 
   return arr;
+}
+
+function radiusAfterMerge(r1, r2) {
+  return Math.sqrt(r1 * r1 + r2 * r2);
 }
 
 // Given angle, use x1, y1 and x2, y2 to convert into proper angle in coordinate system
@@ -365,12 +410,15 @@ function getQuadrant(x1, y1, x2, y2) {
 // LAST BEFORE THE FUNCTIONS
 
 bnova = new BlackNova();
-sobj = arrayOfType(SpaceObject, 100);
+sArr = arrayOfType(SpaceObject, 1000);
 function animate() {
   requestAnimationFrame(animate);
   fillCanvas("white");
 
-  updateAll(sobj);
+  bnova.x = mouse.x;
+  bnova.y = mouse.y;
+
+  updateAll(sArr);
   bnova.update();
 }
 animate();

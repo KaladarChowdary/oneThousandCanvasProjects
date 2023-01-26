@@ -1,7 +1,9 @@
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 maxify();
-const mouse = { x: undefined, y: undefined };
+const mouse = { x: middleX(), y: middleY() };
+let bnova,
+  sArr = [];
 
 window.addEventListener("mousemove", function (evt) {
   mouse.x = evt.pageX;
@@ -11,6 +13,9 @@ window.addEventListener("mousemove", function (evt) {
 // Need to add all the others
 window.addEventListener("resize", function () {
   maxify();
+
+  bnova = new BlackNova();
+  sArr = arrayOfType(SpaceObject, 1000);
 });
 
 //
@@ -19,15 +24,15 @@ window.addEventListener("resize", function () {
 //
 //
 // NEED TO REFACTOR
-class blackNova {
-  constructor(x = middleX(), y = middleY(), radius = 30, range = 120) {
+class BlackNova {
+  constructor(x = middleX(), y = middleY(), radius = 5) {
     this.x = x;
     this.y = y;
     this.radius = radius;
-    this.range = range;
     this.color = "black";
+    this.rangeColor = "rgba(0, 0, 0, 0.2)";
 
-    this.vibrateX = 5;
+    this.vibrateX = 2;
   }
 
   beginPath() {
@@ -44,6 +49,9 @@ class blackNova {
   }
   applyFillColor() {
     ctx.fillStyle = this.color;
+  }
+  setLineWidth(width = 2) {
+    ctx.lineWidth = width;
   }
   fill() {
     ctx.fill();
@@ -68,44 +76,71 @@ class blackNova {
   draw() {
     this.beginPath();
     this.drawOutline();
+    this.stroke();
     this.applyFillColor();
     this.fill();
     this.closePath();
   }
-
   closePath() {
     ctx.closePath();
   }
-  drawRange() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.range, 0, 2 * Math.PI);
-    ctx.fillStyle = "rgba(0,0,0,0.3)";
-    ctx.fill();
+
+  attractLittle() {
+    sArr.forEach((object) => {
+      if (object.merged === false) {
+        let angle = getAngle(this.x, this.y, object.x, object.y);
+
+        let dx = 0.5 * Math.cos(angle);
+        let dy = 0.5 * Math.sin(angle);
+
+        object.x -= dx;
+        object.y += dy;
+
+        if (
+          getDistance(this.x, this.y, object.x, object.y) <= this.radius &&
+          object.merged === false
+        ) {
+          object.merged = true;
+          this.radius = radiusAfterMerge(this.radius, object.radius);
+        }
+      }
+    });
   }
 
   update() {
+    this.attractLittle();
     this.vibrate();
     this.draw();
-    this.drawRange();
     this.bounceCanvas();
   }
 }
-//
 
-//
-//
-//
-//
-//
-// LAST BEFORE THE FUNCTIONS
-bnova = new blackNova();
-function animate() {
-  requestAnimationFrame(animate);
-  fillCanvas("white");
+class SpaceObject {
+  constructor(index) {
+    this.radius = randRange(1, 5);
+    this.x = getX(this.radius);
+    this.y = getY(this.radius);
+    this.color = randomColor();
+    this.index = index;
+    this.merged = false;
 
-  bnova.update();
+    // this.angleToBnova = getAngle(bnova.x, bnova.y, this.x, this.y);
+    // this.closerX = Math.cos(this.angleToBnova);
+    // this.closerY = -Math.sin(this.angleToBnova);
+  }
+
+  draw() {
+    if (this.merged) return;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+  }
+  update() {
+    this.draw();
+  }
 }
-animate();
+
 //
 //
 //
@@ -255,6 +290,21 @@ function drawAxes() {
   ctx.stroke();
 }
 
+function getX(radius) {
+  return randRange(radius + 5, endX() - radius - 5);
+}
+
+function getY(radius) {
+  return randRange(radius + 5, endY() - radius - 5);
+}
+
+function randomColor(opacity = 1) {
+  return `rgba(${randRange(0, 256)},${randRange(0, 256)},${randRange(
+    0,
+    256
+  )},${opacity})`;
+}
+
 function between(a, b, x) {
   return a < x && x < b;
 }
@@ -289,6 +339,20 @@ function radToDeg(angle) {
   return (angle * 180) / Math.PI;
 }
 
+function arrayOfType(clss, n) {
+  let arr = [];
+
+  for (let i = 0; i < n; i++) {
+    arr.push(new clss(i));
+  }
+
+  return arr;
+}
+
+function radiusAfterMerge(r1, r2) {
+  return Math.sqrt(r1 * r1 + r2 * r2);
+}
+
 // Given angle, use x1, y1 and x2, y2 to convert into proper angle in coordinate system
 function updateThetaWithQuadrants(x1, y1, x2, y2, theta) {
   let i = getQuadrant(x1, y1, x2, y2);
@@ -313,3 +377,32 @@ function getQuadrant(x1, y1, x2, y2) {
   else if (x2 < x1 && y2 >= y1) return 3;
   else if (x2 >= x1 && y2 > y1) return 4;
 }
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+// LAST BEFORE THE FUNCTIONS
+
+bnova = new BlackNova();
+sArr = arrayOfType(SpaceObject, 1000);
+function animate() {
+  requestAnimationFrame(animate);
+  fillCanvas("white");
+
+  bnova.x = mouse.x;
+  bnova.y = mouse.y;
+
+  updateAll(sArr);
+  bnova.update();
+}
+animate();
