@@ -187,3 +187,17 @@ function getQuadrant(x1, y1, x2, y2) {
   else if (x2 < x1 && y2 >= y1) return 3;
   else if (x2 >= x1 && y2 > y1) return 4;
 }
+
+function drawAxes() {
+  ctx.beginPath();
+  ctx.moveTo(0, middleY());
+  ctx.lineTo(endX(), middleY());
+  ctx.strokeStyle = "grey";
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(middleX(), 0);
+  ctx.lineTo(middleX(), endY());
+  ctx.strokeStyle = "grey";
+  ctx.stroke();
+}

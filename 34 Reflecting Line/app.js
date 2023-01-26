@@ -1,6 +1,7 @@
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
-
+const mouse = { x: undefined, y: undefined };
+let line;
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
@@ -31,31 +32,95 @@ class Circle {
 
 const Cobj = new Circle(10, 10, 10, "rgba(255, 0, 0, 0.2)");
 
-window.addEventListener("dblclick", function (evt) {});
+window.addEventListener("dblclick", function (evt) {
+  line.getDxDy();
+});
 
-const mouse = { x: undefined, y: undefined };
 window.addEventListener("mousemove", function (evt) {
   mouse.x = evt.pageX;
   mouse.y = evt.pageY;
 });
 
 // CLASS
-class line {
-  constructor(initX, initY) {
-    this.initX = initX;
-    this.initY = initY;
+// Needs double click to get direction
+class Line {
+  constructor(initX = 0, initY = middleY()) {
+    this.x = initX;
+    this.y = initY;
 
-    this.dx = 1;
-    this.dy = -1;
+    this.dx = 0;
+    this.dy = 0;
+
+    this.fastDx = 5;
+    this.fastDy = 5;
+
+    this.firstTime = true;
+  }
+
+  getDxDy() {
+    if (this.dx === 0 && this.dy === 0) {
+      let angle = getAngle(this.x, this.y, mouse.x, mouse.y);
+      this.dx = Math.cos(angle);
+      this.dy = -Math.sin(angle);
+    }
   }
 
   updateXandY() {
-    x += dx;
-    y += dy;
+    this.x += this.dx;
+    this.y += this.dy;
   }
 
-  bounceFromBoundary(){
-    if(x <= 0)
+  bounceFromBoundary() {
+    if (this.x <= 0) {
+      this.dx = positive(this.dx);
+    } else if (this.x >= endX()) {
+      this.dx = negative(this.dx);
+    }
+    if (this.y <= 0) {
+      this.dy = positive(this.dy);
+      console.log(this.dy);
+    } else if (this.y >= endY()) {
+      this.dy = negative(this.dy);
+    }
+  }
+
+  beginPath() {
+    ctx.beginPath();
+  }
+  move() {
+    ctx.moveTo(this.x, this.y);
+  }
+  line() {
+    ctx.lineTo(this.x, this.y);
+  }
+  setColorRed() {
+    ctx.strokeStyle = "red";
+  }
+  setLineWidthTwo() {
+    ctx.lineWidth = 2;
+  }
+  Stroke() {
+    ctx.stroke();
+  }
+
+  draw() {
+    if (this.firstTime) {
+      this.firstTime = false;
+      this.beginPath();
+
+      this.move();
+    } else {
+      this.line();
+    }
+    this.setColorRed();
+    this.setLineWidthTwo();
+    this.Stroke();
+  }
+
+  update() {
+    this.bounceFromBoundary();
+    this.draw();
+    this.updateXandY();
   }
 }
 
@@ -256,14 +321,30 @@ function pointAtCentre() {
   ctx.fill();
 }
 
+function drawAxes() {
+  ctx.beginPath();
+  ctx.moveTo(0, middleY());
+  ctx.lineTo(endX(), middleY());
+  ctx.strokeStyle = "grey";
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(middleX(), 0);
+  ctx.lineTo(middleX(), endY());
+  ctx.strokeStyle = "grey";
+  ctx.stroke();
+
+  ctx.closePath();
+}
+
+// END OF FUNCTIONS
+
+line = new Line();
+
 function animate() {
   requestAnimationFrame(animate);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  fillCanvas("white");
 
-  Cobj.x = mouse.x;
-  Cobj.y = mouse.y;
-  Cobj.update();
-
-  pointAtCentre();
+  line.update();
 }
 animate();
