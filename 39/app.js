@@ -328,6 +328,8 @@ function displayEndScreen() {
   ctx.fillStyle = "red";
   ctx.font = "bold 20px serif";
   ctx.fillText("Press 'Enter' to Restart", middleX() - 10, middleY() + 80);
+
+  score = 0;
 }
 
 function displayScore() {
