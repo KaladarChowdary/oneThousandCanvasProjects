@@ -242,4 +242,32 @@ function acceptableY(radius) {
   return randRange(radius + 5, endY() - radius - 5);
 }
 
+function clear() {
+  ctx.clearRect(0, 0, endX(), endY());
+}
+
+function randomSign() {
+  return Math.random() < 0.5 ? 1 : -1;
+}
+
+function hypotenuse(x, y) {
+  return Math.sqrt(x * x + y * y);
+}
+
+function circleRectangleIntersection(cX, cY, cR, x2, y2, length2, height2) {
+  let rX = x2 + length2 / 2;
+  let rY = y2 + height2 / 2;
+
+  if (
+    cX + cR < x2 ||
+    cX - cR > x2 + length2 ||
+    cY + cR < y2 ||
+    cY - cR > y2 + height2 ||
+    getDistance(cX, cY, rX, rY) > cR + hypotenuse(length2, height2) / 2
+  ) {
+    return false;
+  } else {
+    return true;
+  }
+}
 // ----------------------------------------------------------------------------------------------------------------

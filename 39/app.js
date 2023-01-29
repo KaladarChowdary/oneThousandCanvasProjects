@@ -12,6 +12,22 @@ window.addEventListener("mousemove", function (evt) {
 
 window.addEventListener("resize", function () {
   maxify();
+  box = new Rectangle();
+  ball = new Ball();
+});
+
+window.addEventListener("keydown", function (evt) {
+  if (evt.code === "ArrowLeft") {
+    box.moveLeft();
+    box.accelarate();
+  } else if (evt.code === "ArrowRight") {
+    box.moveRight();
+    box.accelarate();
+  }
+});
+
+window.addEventListener("keyup", function (evt) {
+  box.setOriginalSpeed();
 });
 // -------------------------------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------------------------------
@@ -258,15 +274,47 @@ function acceptableY(radius) {
   return randRange(radius + 5, endY() - radius - 5);
 }
 
+function clear() {
+  ctx.clearRect(0, 0, endX(), endY());
+}
+
+function randomSign() {
+  return Math.random() < 0.5 ? 1 : -1;
+}
+
+function hypotenuse(x, y) {
+  return Math.sqrt(x * x + y * y);
+}
+
+function circleRectangleIntersection(cX, cY, cR, x2, y2, length2, height2) {
+  let rX = x2 + length2 / 2;
+  let rY = y2 + height2 / 2;
+
+  if (
+    cX + cR < x2 ||
+    cX - cR > x2 + length2 ||
+    cY + cR < y2 ||
+    cY - cR > y2 + height2 ||
+    getDistance(cX, cY, rX, rY) > cR + hypotenuse(length2, height2) / 2
+  ) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
 // ----------------------------------------------------------------------------------------------------------------
 
 // -------------------------------------------------------------------------------------------------------------
 class Ball {
-  constructor(x = middleX(), y = middleY(), radius = 5, color = "red") {
+  constructor(x = middleX(), y = middleY(), radius = 15, color = "red") {
     this.x = x;
     this.y = y;
     this.radius = radius;
     this.color = color;
+
+    this.dx = randomSign() * randRange(2, 3);
+    this.dy = randomSign() * randRange(1, 2);
   }
 
   draw() {
@@ -274,19 +322,128 @@ class Ball {
     ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
     ctx.fillStyle = this.color;
     ctx.fill();
+    ctx.closePath();
+  }
+
+  updateXandY() {
+    this.x += this.dx;
+    this.y += this.dy;
+  }
+
+  upperCollision() {
+    return this.y - this.radius <= 0;
+  }
+
+  bottomCollision() {
+    return this.y + this.radius >= endY();
+  }
+
+  leftCollision() {
+    return this.x - this.radius <= 0;
+  }
+
+  rightCollision() {
+    return this.x + this.radius >= endX();
+  }
+
+  bounceIfCollision() {
+    if (this.upperCollision()) {
+      this.dy = positive(this.dy);
+    } else if (this.bottomCollision()) {
+      this.dy = negative(this.dy);
+    }
+
+    if (this.leftCollision()) {
+      this.dx = positive(this.dx);
+    } else if (this.rightCollision()) {
+      this.dx = negative(this.dx);
+    }
   }
 
   update() {
+    this.updateXandY();
+    this.draw();
+    this.bounceIfCollision();
+  }
+}
+
+class Rectangle {
+  constructor(length = 60, height = 20, color = "green") {
+    this.length = length;
+    this.height = height;
+    this.x = 0;
+    this.y = endY() - height;
+    this.color = color;
+
+    // set while ball is actually colliding
+    this.speed = 10;
+    this.originalSpeed = 10;
+    this.accelaration = 10;
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x, this.y, this.length, this.height);
+    ctx.closePath();
+  }
+
+  notAtLeftCorner() {
+    return this.x > 0;
+  }
+
+  notAtRightCorner() {
+    return this.x + this.length < endX();
+  }
+
+  accelarate() {
+    this.speed += this.accelaration;
+  }
+
+  setOriginalSpeed() {
+    this.speed = this.originalSpeed;
+  }
+
+  moveLeft() {
+    this.x -= this.speed;
+    this.x = Math.max(0, this.x);
+  }
+
+  moveRight() {
+    this.x += this.speed;
+    this.x = Math.min(endX(), this.x + this.length) - this.length;
+  }
+
+  collision() {
+    return circleRectangleIntersection(
+      ball.x,
+      ball.y,
+      ball.radius,
+      this.x,
+      this.y,
+      this.length,
+      this.height
+    );
+  }
+
+  update() {
+    if (this.collision()) {
+      ball.dy = negative(ball.dy);
+    }
     this.draw();
   }
 }
 
 // -------------------------------------------------------------------------------------------------------------
 ball = new Ball();
+box = new Rectangle();
 // -------------------------------------------------------------------------------------------------------------
 function animate() {
   requestAnimationFrame(animate);
-  fillCanvas("white");
+  clear();
+
+  ball.update();
+  box.update();
 }
 animate();
 // -------------------------------------------------------------------------------------------------------------
