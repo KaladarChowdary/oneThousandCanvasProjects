@@ -2,7 +2,9 @@ const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 maxify();
 const mouse = { x: -2000, y: -2000 };
-let ball, box, temp;
+let ball, box, temp, gameRunning, score;
+gameRunning = true;
+score = 0;
 
 // -------------------------------------------------------------------------------------------------------------
 window.addEventListener("mousemove", function (evt) {
@@ -23,6 +25,10 @@ window.addEventListener("keydown", function (evt) {
   } else if (evt.code === "ArrowRight") {
     box.moveRight();
     box.accelarate();
+  } else if (evt.code === "Enter" && !gameRunning) {
+    gameRunning = true;
+    animate();
+    ball = new Ball();
   }
 });
 
@@ -303,6 +309,33 @@ function circleRectangleIntersection(cX, cY, cR, x2, y2, length2, height2) {
   }
 }
 
+function displayEndScreen() {
+  ctx.font = "20px serif";
+  ctx.fillText(
+    `GAME BY KALADAR
+  `,
+    middleX() - 20,
+    30
+  );
+
+  ctx.font = "30px serif";
+  ctx.fillText("GAME OVER!", middleX() - 10, middleY());
+
+  ctx.fillStyle = "black";
+  ctx.font = "20px serif";
+  ctx.fillText(`SCORE - ${score}`, middleX() - 10, middleY() + 40);
+
+  ctx.fillStyle = "red";
+  ctx.font = "bold 20px serif";
+  ctx.fillText("Press 'Enter' to Restart", middleX() - 10, middleY() + 80);
+}
+
+function displayScore() {
+  ctx.fillStyle = "rgb(51,0,25)";
+  ctx.font = "BOLD 20px sans-serif";
+  ctx.fillText(`SCORE - ${score}`, 5, 30);
+}
+
 // ----------------------------------------------------------------------------------------------------------------
 
 // -------------------------------------------------------------------------------------------------------------
@@ -368,17 +401,60 @@ class Ball {
 }
 
 class Rectangle {
-  constructor(length = 60, height = 20, color = "green") {
+  constructor(length = 70, height = 30, color = "green") {
     this.length = length;
     this.height = height;
     this.x = 0;
     this.y = endY() - height;
     this.color = color;
 
+    this.edgeTheta = Math.atan2(height, length);
+
     // set while ball is actually colliding
-    this.speed = 10;
-    this.originalSpeed = 10;
-    this.accelaration = 10;
+    this.speed = 20;
+    this.originalSpeed = 20;
+    this.accelaration = 0;
+  }
+
+  getCollisionAngle() {
+    return getAngle(
+      this.x + this.length / 2,
+      this.y + this.height / 2,
+      ball.x,
+      ball.y
+    );
+  }
+
+  handleCollision() {
+    if (this.isTopCollision()) {
+      ball.dy = negative(ball.dy);
+      score++;
+    } else if (this.isLeftCollision()) {
+      ball.dx = negative(ball.dx);
+    } else if (this.isRightCollision()) {
+      ball.dx = positive(ball.dx);
+    } else {
+      ball.dx = -ball.dx;
+      ball.dy = -ball.dy;
+    }
+  }
+
+  isTopCollision() {
+    return (
+      this.collisionAngle > this.edgeTheta &&
+      this.collisionAngle < Math.PI - this.edgeTheta
+    );
+  }
+
+  isLeftCollision() {
+    return this.collisionAngle > Math.PI - this.edgeTheta;
+  }
+
+  isRightCollision() {
+    return (
+      this.collisionAngle < this.edgeTheta ||
+      this.collisionAngle > 2 * Math.PI - this.edgeTheta
+    );
   }
 
   draw() {
@@ -428,7 +504,12 @@ class Rectangle {
 
   update() {
     if (this.collision()) {
-      ball.dy = negative(ball.dy);
+      this.collisionAngle = this.getCollisionAngle();
+      this.handleCollision();
+      ball.dx += 0.05 * ball.dx;
+      ball.dy += 0.05 * ball.dy;
+
+      this.originalSpeed = Math.max(ball.dx, this.originalSpeed);
     }
     this.draw();
   }
@@ -437,13 +518,23 @@ class Rectangle {
 // -------------------------------------------------------------------------------------------------------------
 ball = new Ball();
 box = new Rectangle();
+display = new Text(score);
 // -------------------------------------------------------------------------------------------------------------
 function animate() {
-  requestAnimationFrame(animate);
-  clear();
+  if (gameRunning) {
+    requestAnimationFrame(animate);
+    clear();
 
-  ball.update();
-  box.update();
+    ball.update();
+    box.update();
+    displayScore();
+
+    if (ball.y + ball.radius >= endY()) {
+      clear();
+      gameRunning = false;
+      displayEndScreen();
+    }
+  }
 }
 animate();
 // -------------------------------------------------------------------------------------------------------------
