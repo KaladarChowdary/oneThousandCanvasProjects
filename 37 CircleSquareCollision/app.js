@@ -1,9 +1,8 @@
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 maxify();
-const mouse = { x: -100, y: -100 };
-let ball,
-  particle = {};
+const mouse = { x: -2000, y: -2000 };
+let ball, rect;
 
 window.addEventListener("mousemove", function (evt) {
   mouse.x = evt.pageX;
@@ -14,6 +13,7 @@ window.addEventListener("mousemove", function (evt) {
 window.addEventListener("resize", function () {
   maxify();
   ball = new Ball();
+  rect = new Rectangle();
 });
 
 //
@@ -24,7 +24,7 @@ window.addEventListener("resize", function () {
 // NEED TO REFACTOR
 
 class Ball {
-  constructor(x = middleX(), y = middleY(), radius = 100, color = "red") {
+  constructor(x = middleX(), y = middleY(), radius = 40, color = "red") {
     this.radius = radius;
     this.x = x;
     this.y = y;
@@ -35,113 +35,81 @@ class Ball {
   }
 
   draw() {
-    if (this.radius < 0.1) return;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
     ctx.fillStyle = this.color;
     ctx.fill();
   }
-  updateFrame() {
-    this.previous = this.current;
-    this.current = isInsideCircle(
-      mouse.x,
-      mouse.y,
-      this.x,
-      this.y,
-      this.radius
-    );
-  }
-
-  detectCollision() {
-    return this.current && !this.previous;
+  setToMouse() {
+    this.x = mouse.x;
+    this.y = mouse.y;
   }
   update() {
-    this.updateFrame();
-    if (this.detectCollision()) {
-      this.color = "black";
-      this.radius -= 7;
-      particle = createDust();
-    } else {
-      this.color = "red";
-    }
-
+    this.setToMouse();
     this.draw();
   }
 }
 
-class Dust {
-  constructor(x = 100, y = 100, radius = 5, gravity = 0.03, color = "red") {
+// RECTANGLE
+class Rectangle {
+  constructor(
+    size = 100,
+    x = middleX() - size / 2,
+    y = middleY() - size / 2,
+    color = "green"
+  ) {
     this.x = x;
     this.y = y;
-    this.radius = radius;
-    this.gravity = gravity;
+    this.size = size;
     this.color = color;
-    this.delete = false;
-    this.bounce = randInt(1, 10);
-    this.opacity = 1;
-    this.reduce = 0;
-    this.small = 0.05;
-
-    this.getDxDyAccordingToBall();
+    this.hyp = Math.sqrt(size * size + size * size);
   }
 
-  getDxDyAccordingToBall() {
-    if (this.x < ball.x) {
-      this.dx = -randRange(0.1, 0.5);
-    } else {
-      this.dx = randRange(0.1, 0.5);
-    }
-
-    if (this.y < ball.y) {
-      this.dy = -randRange(0.1, 0.5);
-    } else {
-      this.dy = randRange(0.1, 0.5);
-    }
-  }
-
-  draw() {
+  colorRectangle() {
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-    ctx.fillStyle = `rgba(256, 0,0, ${this.opacity})`;
-    ctx.fill();
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x, this.y, this.size, this.size);
   }
 
-  decreaseOpacity() {
-    this.opacity -= this.reduce;
-  }
-  decreaseRadius() {
-    this.radius -= this.small;
-  }
-
-  accelarate() {
-    this.dy += this.gravity;
+  lengthWhenBallAtEdge() {
+    return getDistance(
+      ball.x,
+      ball.y,
+      this.x + this.size / 2,
+      this.y + this.size / 2
+    );
   }
 
-  updateXandY() {
-    this.x += this.dx;
-    this.y += this.dy;
-  }
-
-  changeDirOnHit() {
-    if (this.x + this.radius >= endX()) {
-      this.dx = negative(this.dx);
-    } else if (this.x - this.radius <= 0) {
-      this.dx = positive(this.dx);
-    }
-    if (this.y + this.radius >= endY()) {
-      this.dy = negative(this.dy);
-      this.bounce -= 1;
-    } else if (this.y - this.radius <= 0) {
-      this.dy = positive(this.dy);
+  isBallCollided() {
+    if (
+      ball.x + ball.radius < this.x ||
+      ball.x - ball.radius > this.x + this.size ||
+      ball.y + ball.radius < this.y ||
+      ball.y - ball.radius > this.y + this.size ||
+      this.lengthWhenBallAtEdge() > ball.radius + this.hyp / 2
+    ) {
+      return false;
+    } else {
+      return true;
     }
   }
 
   update() {
-    this.updateXandY();
-    this.accelarate();
-    this.draw();
-    this.decreaseRadius();
-    this.changeDirOnHit();
+    if (
+      BallSquareCollision(
+        ball.x,
+        ball.y,
+        ball.radius,
+        this.x,
+        this.y,
+        this.size
+      )
+    ) {
+      this.color = "rgba(256, 0, 0, 0.5)";
+    } else {
+      this.color = "green";
+    }
+    this.colorRectangle();
   }
 }
 
@@ -364,6 +332,21 @@ function updateThetaWithQuadrants(x1, y1, x2, y2, theta) {
   return theta;
 }
 
+function BallSquareCollision(x1, y1, r1, x2, y2, size2) {
+  if (
+    x1 + r1 < x2 ||
+    x1 - r1 > x2 + size2 ||
+    y1 + r1 < y2 ||
+    y1 - r1 > y2 + size2 ||
+    getDistance(x1, y1, x2 + size2 / 2, y2 + size2 / 2) >
+      r1 + Math.sqrt(size2 * size2 + size2 * size2) / 2
+  ) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
 // Quadrant according to coordinate system
 function getQuadrant(x1, y1, x2, y2) {
   if (x2 > x1 && y2 <= y1) return 1;
@@ -386,40 +369,13 @@ function getQuadrant(x1, y1, x2, y2) {
 //
 //
 // LAST BEFORE THE FUNCTIONS
-function createDust() {
-  let x, y, r, theta, max, radius;
-  r = ball.radius;
-  max = 5 * r;
-  r = ball.radius;
-
-  particle = {};
-
-  for (let i = 0; i < max; i++) {
-    theta = (i / max) * 2 * Math.PI;
-
-    x = middleX() + r * Math.cos(theta);
-    y = middleY() + r * Math.sin(theta) + randRange(1, 2);
-    radius = randRange(1, 2);
-
-    particle[i] = new Dust(x, y, radius);
-  }
-  return particle;
-}
-
 ball = new Ball();
-
+rect = new Rectangle();
 function animate() {
   requestAnimationFrame(animate);
   fillCanvas("white");
 
-  for (const index in particle) {
-    if (particle[index].radius <= 0) {
-      delete particle[index];
-    } else {
-      particle[index].update();
-    }
-  }
-
+  rect.update();
   ball.update();
 }
 animate();

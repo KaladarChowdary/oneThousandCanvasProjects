@@ -1,9 +1,8 @@
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 maxify();
-const mouse = { x: -100, y: -100 };
-let ball,
-  particle = {};
+const mouse = { x: middleX(), y: middleY() };
+let ball, particle;
 
 window.addEventListener("mousemove", function (evt) {
   mouse.x = evt.pageX;
@@ -13,7 +12,6 @@ window.addEventListener("mousemove", function (evt) {
 // Need to add all the others
 window.addEventListener("resize", function () {
   maxify();
-  ball = new Ball();
 });
 
 //
@@ -24,7 +22,7 @@ window.addEventListener("resize", function () {
 // NEED TO REFACTOR
 
 class Ball {
-  constructor(x = middleX(), y = middleY(), radius = 100, color = "red") {
+  constructor(x = middleX(), y = middleY(), radius = 40, color = "red") {
     this.radius = radius;
     this.x = x;
     this.y = y;
@@ -35,7 +33,6 @@ class Ball {
   }
 
   draw() {
-    if (this.radius < 0.1) return;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
     ctx.fillStyle = this.color;
@@ -58,9 +55,7 @@ class Ball {
   update() {
     this.updateFrame();
     if (this.detectCollision()) {
-      this.color = "black";
-      this.radius -= 7;
-      particle = createDust();
+      this.color = "blue";
     } else {
       this.color = "red";
     }
@@ -70,56 +65,29 @@ class Ball {
 }
 
 class Dust {
-  constructor(x = 100, y = 100, radius = 5, gravity = 0.03, color = "red") {
+  constructor(x = 100, y = 100, radius = 5, gravity = 0.07, color = "red") {
     this.x = x;
     this.y = y;
     this.radius = radius;
     this.gravity = gravity;
     this.color = color;
-    this.delete = false;
-    this.bounce = randInt(1, 10);
-    this.opacity = 1;
-    this.reduce = 0;
-    this.small = 0.05;
 
-    this.getDxDyAccordingToBall();
-  }
-
-  getDxDyAccordingToBall() {
-    if (this.x < ball.x) {
-      this.dx = -randRange(0.1, 0.5);
-    } else {
-      this.dx = randRange(0.1, 0.5);
-    }
-
-    if (this.y < ball.y) {
-      this.dy = -randRange(0.1, 0.5);
-    } else {
-      this.dy = randRange(0.1, 0.5);
-    }
+    this.dx = 3 * (0.5 - Math.random());
+    this.dy = 3 * (0.5 - Math.random());
   }
 
   draw() {
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-    ctx.fillStyle = `rgba(256, 0,0, ${this.opacity})`;
+    ctx.fillStyle = this.color;
     ctx.fill();
-  }
-
-  decreaseOpacity() {
-    this.opacity -= this.reduce;
-  }
-  decreaseRadius() {
-    this.radius -= this.small;
-  }
-
-  accelarate() {
-    this.dy += this.gravity;
   }
 
   updateXandY() {
     this.x += this.dx;
     this.y += this.dy;
+
+    this.dy += this.gravity;
   }
 
   changeDirOnHit() {
@@ -128,9 +96,9 @@ class Dust {
     } else if (this.x - this.radius <= 0) {
       this.dx = positive(this.dx);
     }
+
     if (this.y + this.radius >= endY()) {
       this.dy = negative(this.dy);
-      this.bounce -= 1;
     } else if (this.y - this.radius <= 0) {
       this.dy = positive(this.dy);
     }
@@ -138,9 +106,7 @@ class Dust {
 
   update() {
     this.updateXandY();
-    this.accelarate();
     this.draw();
-    this.decreaseRadius();
     this.changeDirOnHit();
   }
 }
@@ -386,40 +352,13 @@ function getQuadrant(x1, y1, x2, y2) {
 //
 //
 // LAST BEFORE THE FUNCTIONS
-function createDust() {
-  let x, y, r, theta, max, radius;
-  r = ball.radius;
-  max = 5 * r;
-  r = ball.radius;
-
-  particle = {};
-
-  for (let i = 0; i < max; i++) {
-    theta = (i / max) * 2 * Math.PI;
-
-    x = middleX() + r * Math.cos(theta);
-    y = middleY() + r * Math.sin(theta) + randRange(1, 2);
-    radius = randRange(1, 2);
-
-    particle[i] = new Dust(x, y, radius);
-  }
-  return particle;
-}
-
 ball = new Ball();
-
+particle = new Dust();
 function animate() {
   requestAnimationFrame(animate);
   fillCanvas("white");
 
-  for (const index in particle) {
-    if (particle[index].radius <= 0) {
-      delete particle[index];
-    } else {
-      particle[index].update();
-    }
-  }
-
   ball.update();
+  particle.update();
 }
 animate();

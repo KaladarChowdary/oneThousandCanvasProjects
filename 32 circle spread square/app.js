@@ -132,7 +132,14 @@ class Square {
   }
 
   doesBallIntersect() {
-    return this.isSquareInsideCircle() || this.isBallEdgeOnSquare();
+    return BallSquareCollision(
+      ball.x,
+      ball.y,
+      ball.radius,
+      this.x,
+      this.y,
+      this.size
+    );
   }
 
   isSquareInsideCircle() {
@@ -173,6 +180,8 @@ class Square {
     this.drawAndFill();
   }
 }
+
+// CLASS
 class Ball {
   constructor(
     x = middleX(),
@@ -436,4 +445,19 @@ function getQuadrant(x1, y1, x2, y2) {
   else if (x2 <= x1 && y2 < y1) return 2;
   else if (x2 < x1 && y2 >= y1) return 3;
   else if (x2 >= x1 && y2 > y1) return 4;
+}
+
+function BallSquareCollision(x1, y1, r1, x2, y2, size2) {
+  if (
+    x1 + r1 < x2 ||
+    x1 - r1 > x2 + size2 ||
+    y1 + r1 < y2 ||
+    y1 - r1 > y2 + size2 ||
+    getDistance(x1, y1, x2 + size2 / 2, y2 + size2 / 2) >
+      r1 + Math.sqrt(size2 * size2 + size2 * size2) / 2
+  ) {
+    return false;
+  } else {
+    return true;
+  }
 }

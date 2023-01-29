@@ -5,7 +5,7 @@ const mouse = { x: -1000, y: -1000 };
 let size, gap;
 size = 50;
 gap = 10;
-let coordinates, squareArray;
+let ball, coordinates, squareArray;
 
 window.addEventListener("mousemove", function (evt) {
   mouse.x = evt.pageX;
@@ -124,7 +124,15 @@ class Square {
   // ALWAYS AT THE BEGINING OF UPDATE AND NO WHERE ELSE
   updateBeforeandAfter() {
     this.before = this.current;
-    this.current = this.doesBallIntersect();
+    // this.current = this.doesBallIntersect();
+    this.current = BallSquareCollision(
+      ball.x,
+      ball.y,
+      ball.radius,
+      this.x,
+      this.y,
+      this.size
+    );
   }
   drawAndFill() {
     this.fill();
@@ -249,7 +257,7 @@ class Ball {
 // LAST BEFORE THE FUNCTIONS
 coordinates = giveCoordinates(size, gap);
 squareArray = squaresWithCoordinates(coordinates, size);
-let ball = new Ball(80, 80);
+ball = new Ball(80, 80);
 function animate() {
   requestAnimationFrame(animate);
   fillCanvas("white");
@@ -466,4 +474,19 @@ function getQuadrant(x1, y1, x2, y2) {
   else if (x2 <= x1 && y2 < y1) return 2;
   else if (x2 < x1 && y2 >= y1) return 3;
   else if (x2 >= x1 && y2 > y1) return 4;
+}
+
+function BallSquareCollision(x1, y1, r1, x2, y2, size2) {
+  if (
+    x1 + r1 < x2 ||
+    x1 - r1 > x2 + size2 ||
+    y1 + r1 < y2 ||
+    y1 - r1 > y2 + size2 ||
+    getDistance(x1, y1, x2 + size2 / 2, y2 + size2 / 2) >
+      r1 + Math.sqrt(size2 * size2 + size2 * size2) / 2
+  ) {
+    return false;
+  } else {
+    return true;
+  }
 }

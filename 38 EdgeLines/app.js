@@ -1,19 +1,32 @@
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 maxify();
-const mouse = { x: -100, y: -100 };
+const mouse = { x: -2000, y: -2000 };
 let ball,
-  particle = {};
+  line,
+  mouseOnCanvas = false;
+
+let coordinates, lineSegments;
 
 window.addEventListener("mousemove", function (evt) {
   mouse.x = evt.pageX;
   mouse.y = evt.pageY;
 });
 
+canvas.addEventListener("mouseenter", function () {
+  mouseOnCanvas = true;
+});
+
+canvas.addEventListener("mouseleave", function () {
+  mouseOnCanvas = false;
+});
+
 // Need to add all the others
 window.addEventListener("resize", function () {
   maxify();
-  ball = new Ball();
+
+  coordinates = getAllEndCoordinates();
+  lineSegments = getLineSegments(coordinates);
 });
 
 //
@@ -24,7 +37,7 @@ window.addEventListener("resize", function () {
 // NEED TO REFACTOR
 
 class Ball {
-  constructor(x = middleX(), y = middleY(), radius = 100, color = "red") {
+  constructor(x = middleX(), y = middleY(), radius = 5, color = "green") {
     this.radius = radius;
     this.x = x;
     this.y = y;
@@ -35,113 +48,40 @@ class Ball {
   }
 
   draw() {
-    if (this.radius < 0.1) return;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
     ctx.fillStyle = this.color;
     ctx.fill();
   }
-  updateFrame() {
-    this.previous = this.current;
-    this.current = isInsideCircle(
-      mouse.x,
-      mouse.y,
-      this.x,
-      this.y,
-      this.radius
-    );
-  }
-
-  detectCollision() {
-    return this.current && !this.previous;
+  setToMouse() {
+    this.x = mouse.x;
+    this.y = mouse.y;
   }
   update() {
-    this.updateFrame();
-    if (this.detectCollision()) {
-      this.color = "black";
-      this.radius -= 7;
-      particle = createDust();
-    } else {
-      this.color = "red";
-    }
-
     this.draw();
   }
 }
 
-class Dust {
-  constructor(x = 100, y = 100, radius = 5, gravity = 0.03, color = "red") {
-    this.x = x;
-    this.y = y;
-    this.radius = radius;
-    this.gravity = gravity;
+class LineSegment {
+  constructor(x1 = 0, y1 = 0, width = 0.5, color = "red") {
+    this.x1 = x1;
+    this.y1 = y1;
     this.color = color;
-    this.delete = false;
-    this.bounce = randInt(1, 10);
-    this.opacity = 1;
-    this.reduce = 0;
-    this.small = 0.05;
-
-    this.getDxDyAccordingToBall();
-  }
-
-  getDxDyAccordingToBall() {
-    if (this.x < ball.x) {
-      this.dx = -randRange(0.1, 0.5);
-    } else {
-      this.dx = randRange(0.1, 0.5);
-    }
-
-    if (this.y < ball.y) {
-      this.dy = -randRange(0.1, 0.5);
-    } else {
-      this.dy = randRange(0.1, 0.5);
-    }
+    this.width = width;
   }
 
   draw() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-    ctx.fillStyle = `rgba(256, 0,0, ${this.opacity})`;
-    ctx.fill();
-  }
-
-  decreaseOpacity() {
-    this.opacity -= this.reduce;
-  }
-  decreaseRadius() {
-    this.radius -= this.small;
-  }
-
-  accelarate() {
-    this.dy += this.gravity;
-  }
-
-  updateXandY() {
-    this.x += this.dx;
-    this.y += this.dy;
-  }
-
-  changeDirOnHit() {
-    if (this.x + this.radius >= endX()) {
-      this.dx = negative(this.dx);
-    } else if (this.x - this.radius <= 0) {
-      this.dx = positive(this.dx);
-    }
-    if (this.y + this.radius >= endY()) {
-      this.dy = negative(this.dy);
-      this.bounce -= 1;
-    } else if (this.y - this.radius <= 0) {
-      this.dy = positive(this.dy);
+    if (mouseOnCanvas) {
+      ctx.beginPath();
+      ctx.lineWidth = this.lineWidth;
+      ctx.strokeStyle = this.color;
+      ctx.moveTo(this.x1, this.y1);
+      ctx.lineTo(mouse.x, mouse.y);
+      ctx.stroke();
     }
   }
-
   update() {
-    this.updateXandY();
-    this.accelarate();
     this.draw();
-    this.decreaseRadius();
-    this.changeDirOnHit();
   }
 }
 
@@ -364,12 +304,54 @@ function updateThetaWithQuadrants(x1, y1, x2, y2, theta) {
   return theta;
 }
 
+function BallSquareCollision(x1, y1, r1, x2, y2, size2) {
+  if (
+    x1 + r1 < x2 ||
+    x1 - r1 > x2 + size2 ||
+    y1 + r1 < y2 ||
+    y1 - r1 > y2 + size2 ||
+    getDistance(x1, y1, x2 + size2 / 2, y2 + size2 / 2) >
+      r1 + Math.sqrt(size2 * size2 + size2 * size2) / 2
+  ) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
 // Quadrant according to coordinate system
 function getQuadrant(x1, y1, x2, y2) {
   if (x2 > x1 && y2 <= y1) return 1;
   else if (x2 <= x1 && y2 < y1) return 2;
   else if (x2 < x1 && y2 >= y1) return 3;
   else if (x2 >= x1 && y2 > y1) return 4;
+}
+
+function getAllEndCoordinates() {
+  let arr = [];
+  let gap = 3;
+
+  for (let i = 0; i < endY(); i += gap) {
+    arr.push([0, i]);
+    arr.push([endX(), i]);
+  }
+
+  for (let j = 0; j < endX(); j += gap) {
+    arr.push([j, 0]);
+    arr.push([j, endY()]);
+  }
+
+  return arr;
+}
+
+function getLineSegments(coordinates) {
+  let l = [];
+
+  coordinates.forEach(([x, y]) => {
+    l.push(new LineSegment(x, y));
+  });
+
+  return l;
 }
 //
 //
@@ -386,40 +368,13 @@ function getQuadrant(x1, y1, x2, y2) {
 //
 //
 // LAST BEFORE THE FUNCTIONS
-function createDust() {
-  let x, y, r, theta, max, radius;
-  r = ball.radius;
-  max = 5 * r;
-  r = ball.radius;
 
-  particle = {};
-
-  for (let i = 0; i < max; i++) {
-    theta = (i / max) * 2 * Math.PI;
-
-    x = middleX() + r * Math.cos(theta);
-    y = middleY() + r * Math.sin(theta) + randRange(1, 2);
-    radius = randRange(1, 2);
-
-    particle[i] = new Dust(x, y, radius);
-  }
-  return particle;
-}
-
-ball = new Ball();
-
+coordinates = getAllEndCoordinates();
+lineSegments = getLineSegments(coordinates);
 function animate() {
   requestAnimationFrame(animate);
   fillCanvas("white");
 
-  for (const index in particle) {
-    if (particle[index].radius <= 0) {
-      delete particle[index];
-    } else {
-      particle[index].update();
-    }
-  }
-
-  ball.update();
+  updateAll(lineSegments);
 }
 animate();

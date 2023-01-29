@@ -1,3 +1,19 @@
+const canvas = document.querySelector("canvas");
+const ctx = canvas.getContext("2d");
+maxify();
+const mouse = { x: -2000, y: -2000 };
+let ball, box, temp;
+
+// -------------------------------------------------------------------------------------------------------------
+window.addEventListener("mousemove", function (evt) {
+  mouse.x = evt.pageX;
+  mouse.y = evt.pageY;
+});
+
+window.addEventListener("resize", function () {
+  maxify();
+});
+// -------------------------------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------------------------------
 // sets canva little less wide and tall than widow
 function maxify(cutBy = 10) {
@@ -243,3 +259,34 @@ function acceptableY(radius) {
 }
 
 // ----------------------------------------------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------------------------------------------
+class Ball {
+  constructor(x = middleX(), y = middleY(), radius = 5, color = "red") {
+    this.x = x;
+    this.y = y;
+    this.radius = radius;
+    this.color = color;
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+  }
+
+  update() {
+    this.draw();
+  }
+}
+
+// -------------------------------------------------------------------------------------------------------------
+ball = new Ball();
+// -------------------------------------------------------------------------------------------------------------
+function animate() {
+  requestAnimationFrame(animate);
+  fillCanvas("white");
+}
+animate();
+// -------------------------------------------------------------------------------------------------------------
